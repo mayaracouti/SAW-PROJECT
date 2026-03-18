@@ -44,8 +44,7 @@ def main():
     # Fase 2: Soma do produto dados indicador * peso de indicador
     dfCriterios = Criterio.criaDataframeDeCriterios(ListaDeCriterios)
     if dfCriterios['peso'].sum() == 0:
-        print("Aviso: todos os pesos são zero, definindo pesos iguais a 1 para cada critério.")
-        dfCriterios['peso'] = 1
+        raise ValueError("Os pesos dos critériosnão podem ser zero.")
 
     dadosNumericosNormalizados = dataFrameNormalizado.drop(columns=["Município"])
     dadosPonderados = Normalizacao.aplicarPesos(dadosNumericosNormalizados, dfCriterios)
