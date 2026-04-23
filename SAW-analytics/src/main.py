@@ -98,6 +98,11 @@ def main():
         rankingNatureza["Posição"] = rankingNatureza.index + 1
         rankingsPorNatureza[nome_natureza] = rankingNatureza[rankingDetalhado.columns]
 
+    rankingsExtras = {
+        "top_10": rankingDetalhado.head(10).copy(),
+        "bottom_10": rankingDetalhado.tail(10).sort_values(by="Score", ascending=True).copy(),
+    }
+
     print("\nCritérios identificados na tabela:")
     print(criterios_identificados.to_string(index=False))
 
@@ -106,6 +111,12 @@ def main():
 
     print("\nRanking final SAW:")
     print(rankinMunicipios.to_string())
+
+    print("\nTop 10:")
+    print(rankingsExtras["top_10"][["Posição", "Município", "Score"]].to_string(index=False))
+
+    print("\nBottom 10:")
+    print(rankingsExtras["bottom_10"][["Posição", "Município", "Score"]].to_string(index=False))
 
     print("\nRankings por Natureza Jurídica:")
     for natureza, rankingNatureza in rankingsPorNatureza.items():
@@ -120,6 +131,9 @@ def main():
     with pd.ExcelWriter(arquivo_ranking, engine="openpyxl") as writer:
         rankingDetalhado.to_excel(writer, sheet_name="ranking_geral", index=False)
         nomes_abas = {"ranking_geral"}
+        for nome, rankingExtra in rankingsExtras.items():
+            nome_aba = interface._nome_aba_excel(nome, nomes_abas)
+            rankingExtra.to_excel(writer, sheet_name=nome_aba, index=False)
         for natureza, rankingNatureza in rankingsPorNatureza.items():
             nome_aba = interface._nome_aba_excel(natureza, nomes_abas)
             rankingNatureza.to_excel(writer, sheet_name=nome_aba, index=False)
@@ -131,6 +145,7 @@ def main():
         criterios=criterios_identificados,
         caminho_padrao=arquivo_ranking,
         rankingsPorNatureza=rankingsPorNatureza,
+        rankingsExtras=rankingsExtras,
     )
 
     return rankinMunicipios

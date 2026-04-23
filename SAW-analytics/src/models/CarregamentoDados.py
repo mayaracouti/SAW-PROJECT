@@ -21,8 +21,11 @@ class CarregamentoDados:
         usados.add(nome_final)
         return nome_final
 
-    def _combinar_rankings_para_csv(self, rankingDetalhado, rankingsPorNatureza):
+    def _combinar_rankings_para_csv(self, rankingDetalhado, rankingsPorNatureza, rankingsExtras):
         rankings = [rankingDetalhado.assign(Ranking="Geral")]
+
+        for nome, ranking in rankingsExtras.items():
+            rankings.append(ranking.assign(Ranking=nome))
 
         for natureza, ranking in rankingsPorNatureza.items():
             rankings.append(ranking.assign(Ranking=f"Natureza Jurídica - {natureza}"))
@@ -30,8 +33,16 @@ class CarregamentoDados:
         colunas = ["Ranking"] + [coluna for coluna in rankingDetalhado.columns]
         return pd.concat(rankings, ignore_index=True)[colunas]
 
-    def exportar_planilha(self, rankingDetalhado, criterios, caminho_padrao, rankingsPorNatureza=None):
+    def exportar_planilha(
+        self,
+        rankingDetalhado,
+        criterios,
+        caminho_padrao,
+        rankingsPorNatureza=None,
+        rankingsExtras=None,
+    ):
         rankingsPorNatureza = rankingsPorNatureza or {}
+        rankingsExtras = rankingsExtras or {}
         caminho_sugerido = Path(caminho_padrao)
         caminho_destino = filedialog.asksaveasfilename(
             title="Salvar planilha do ranking SAW",
@@ -49,7 +60,7 @@ class CarregamentoDados:
 
         destino = Path(caminho_destino)
         if destino.suffix.lower() == ".csv":
-            self._combinar_rankings_para_csv(rankingDetalhado, rankingsPorNatureza).to_csv(
+            self._combinar_rankings_para_csv(rankingDetalhado, rankingsPorNatureza, rankingsExtras).to_csv(
                 destino,
                 sep=";",
                 index=False,
@@ -63,6 +74,13 @@ class CarregamentoDados:
                     sheet_name=self._nome_aba_excel("ranking_geral", nomes_abas),
                     index=False,
                 )
+
+                for nome, ranking in rankingsExtras.items():
+                    ranking.to_excel(
+                        writer,
+                        sheet_name=self._nome_aba_excel(nome, nomes_abas),
+                        index=False,
+                    )
 
                 for natureza, ranking in rankingsPorNatureza.items():
                     ranking.to_excel(
@@ -106,8 +124,9 @@ class CarregamentoDados:
         frame.rowconfigure(0, weight=1)
         frame.columnconfigure(0, weight=1)
 
-    def visualizar_resultados(self, rankingDetalhado, criterios, rankingsPorNatureza=None):
+    def visualizar_resultados(self, rankingDetalhado, criterios, rankingsPorNatureza=None, rankingsExtras=None):
         rankingsPorNatureza = rankingsPorNatureza or {}
+        rankingsExtras = rankingsExtras or {}
         janela = tk.Toplevel()
         janela.title("Resultado SAW - Municípios PCJ")
         janela.geometry("1400x800")
@@ -126,6 +145,11 @@ class CarregamentoDados:
         abas.add(aba_geral, text="Ranking Geral")
         self._criar_tabela(aba_geral, rankingDetalhado.copy(), "Ranking Geral dos Municípios")
 
+        for nome, ranking in rankingsExtras.items():
+            aba_extra = ttk.Frame(abas)
+            abas.add(aba_extra, text=nome[:24])
+            self._criar_tabela(aba_extra, ranking.copy(), nome)
+
         for natureza, ranking in rankingsPorNatureza.items():
             aba_natureza = ttk.Frame(abas)
             abas.add(aba_natureza, text=str(natureza)[:24])
@@ -139,8 +163,16 @@ class CarregamentoDados:
         abas.add(aba_indicadores, text="Indicadores")
         self._criar_tabela(aba_indicadores, criterios, "Indicadores")
 
-    def mostrar_popup_resultados(self, rankingDetalhado, criterios, caminho_padrao, rankingsPorNatureza=None):
+    def mostrar_popup_resultados(
+        self,
+        rankingDetalhado,
+        criterios,
+        caminho_padrao,
+        rankingsPorNatureza=None,
+        rankingsExtras=None,
+    ):
         rankingsPorNatureza = rankingsPorNatureza or {}
+        rankingsExtras = rankingsExtras or {}
         root = tk.Tk()
         root.title("SAW Analytics")
         root.geometry("420x210")
@@ -170,6 +202,7 @@ class CarregamentoDados:
                 criterios,
                 caminho_padrao,
                 rankingsPorNatureza,
+                rankingsExtras,
             ),
         ).pack(fill="x", pady=6)
 
@@ -180,6 +213,7 @@ class CarregamentoDados:
                 rankingDetalhado,
                 criterios,
                 rankingsPorNatureza,
+                rankingsExtras,
             ),
         ).pack(fill="x", pady=6)
 
