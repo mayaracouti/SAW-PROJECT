@@ -174,9 +174,6 @@ def main():
         for nome, rankingExtra in rankingsExtras.items():
             nome_aba = interface._nome_aba_excel(nome, nomes_abas)
             rankingExtra.to_excel(writer, sheet_name=nome_aba, index=False)
-        for tipologia, rankingTipologia in rankingsPorTipologia.items():
-            nome_aba = interface._nome_aba_excel(tipologia, nomes_abas)
-            rankingTipologia.to_excel(writer, sheet_name=nome_aba, index=False)
         for natureza, rankingNatureza in rankingsPorNatureza.items():
             nome_aba = interface._nome_aba_excel(natureza, nomes_abas)
             rankingNatureza.to_excel(writer, sheet_name=nome_aba, index=False)
@@ -188,7 +185,6 @@ def main():
         criterios=criterios_identificados,
         caminho_padrao=arquivo_ranking,
         rankingsPorNatureza=rankingsPorNatureza,
-        rankingsPorTipologia=rankingsPorTipologia,
         rankingsExtras=rankingsExtras,
     )
 

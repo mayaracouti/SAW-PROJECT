@@ -25,20 +25,11 @@ class CarregamentoDados:
         usados.add(nome_final)
         return nome_final
 
-    def _combinar_rankings_para_csv(
-        self,
-        rankingDetalhado,
-        rankingsPorNatureza,
-        rankingsPorTipologia,
-        rankingsExtras,
-    ):
+    def _combinar_rankings_para_csv(self, rankingDetalhado, rankingsPorNatureza, rankingsExtras):
         rankings = [rankingDetalhado.assign(Ranking="Geral")]
 
         for nome, ranking in rankingsExtras.items():
             rankings.append(ranking.assign(Ranking=nome))
-
-        for tipologia, ranking in rankingsPorTipologia.items():
-            rankings.append(ranking.assign(Ranking=tipologia))
 
         for natureza, ranking in rankingsPorNatureza.items():
             rankings.append(ranking.assign(Ranking=f"Natureza Jurídica - {natureza}"))
@@ -52,11 +43,9 @@ class CarregamentoDados:
         criterios,
         caminho_padrao,
         rankingsPorNatureza=None,
-        rankingsPorTipologia=None,
         rankingsExtras=None,
     ):
         rankingsPorNatureza = rankingsPorNatureza or {}
-        rankingsPorTipologia = rankingsPorTipologia or {}
         rankingsExtras = rankingsExtras or {}
         caminho_sugerido = Path(caminho_padrao)
         caminho_destino = filedialog.asksaveasfilename(
@@ -75,12 +64,7 @@ class CarregamentoDados:
 
         destino = Path(caminho_destino)
         if destino.suffix.lower() == ".csv":
-            self._combinar_rankings_para_csv(
-                rankingDetalhado,
-                rankingsPorNatureza,
-                rankingsPorTipologia,
-                rankingsExtras,
-            ).to_csv(
+            self._combinar_rankings_para_csv(rankingDetalhado, rankingsPorNatureza, rankingsExtras).to_csv(
                 destino,
                 sep=";",
                 index=False,
@@ -99,13 +83,6 @@ class CarregamentoDados:
                     ranking.to_excel(
                         writer,
                         sheet_name=self._nome_aba_excel(nome, nomes_abas),
-                        index=False,
-                    )
-
-                for tipologia, ranking in rankingsPorTipologia.items():
-                    ranking.to_excel(
-                        writer,
-                        sheet_name=self._nome_aba_excel(tipologia, nomes_abas),
                         index=False,
                     )
 
@@ -151,16 +128,8 @@ class CarregamentoDados:
         frame.rowconfigure(0, weight=1)
         frame.columnconfigure(0, weight=1)
 
-    def visualizar_resultados(
-        self,
-        rankingDetalhado,
-        criterios,
-        rankingsPorNatureza=None,
-        rankingsPorTipologia=None,
-        rankingsExtras=None,
-    ):
+    def visualizar_resultados(self, rankingDetalhado, criterios, rankingsPorNatureza=None, rankingsExtras=None):
         rankingsPorNatureza = rankingsPorNatureza or {}
-        rankingsPorTipologia = rankingsPorTipologia or {}
         rankingsExtras = rankingsExtras or {}
         janela = tk.Toplevel()
         janela.title("Resultado SAW - Municípios PCJ")
@@ -185,22 +154,7 @@ class CarregamentoDados:
             abas.add(aba_extra, text=nome[:24])
             self._criar_tabela(aba_extra, ranking.copy(), nome)
 
-        if rankingsPorTipologia:
-            aba_tipologia = ttk.Frame(abas)
-            abas.add(aba_tipologia, text="Tipologia")
-            abas_tipologia = ttk.Notebook(aba_tipologia)
-            abas_tipologia.pack(fill="both", expand=True, padx=10, pady=10)
-
-            for tipologia, ranking in rankingsPorTipologia.items():
-                subaba_tipologia = ttk.Frame(abas_tipologia)
-                abas_tipologia.add(subaba_tipologia, text=str(tipologia)[:24])
-                self._criar_tabela(
-                    subaba_tipologia,
-                    ranking.copy(),
-                    f"Ranking - {tipologia}",
-                )
-
-        if rankingsPorNatureza:
+        for natureza, ranking in rankingsPorNatureza.items():
             aba_natureza = ttk.Frame(abas)
             abas.add(aba_natureza, text="Natureza Jurídica")
             abas_natureza = ttk.Notebook(aba_natureza)
@@ -225,11 +179,9 @@ class CarregamentoDados:
         criterios,
         caminho_padrao,
         rankingsPorNatureza=None,
-        rankingsPorTipologia=None,
         rankingsExtras=None,
     ):
         rankingsPorNatureza = rankingsPorNatureza or {}
-        rankingsPorTipologia = rankingsPorTipologia or {}
         rankingsExtras = rankingsExtras or {}
         root = tk.Tk()
         root.title("SAW Analytics")
@@ -260,7 +212,6 @@ class CarregamentoDados:
                 criterios,
                 caminho_padrao,
                 rankingsPorNatureza,
-                rankingsPorTipologia,
                 rankingsExtras,
             ),
         ).pack(fill="x", pady=6)
@@ -272,7 +223,6 @@ class CarregamentoDados:
                 rankingDetalhado,
                 criterios,
                 rankingsPorNatureza,
-                rankingsPorTipologia,
                 rankingsExtras,
             ),
         ).pack(fill="x", pady=6)
