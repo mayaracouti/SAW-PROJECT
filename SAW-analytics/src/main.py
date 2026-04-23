@@ -114,24 +114,22 @@ def main():
 
     pasta_resultados = Path(__file__).resolve().parent / "dados" / "resultado"
     pasta_resultados.mkdir(parents=True, exist_ok=True)
-    arquivo_ranking = pasta_resultados / "ranking_saw_pcj_2024.csv"
-    rankinMunicipios.to_csv(arquivo_ranking, sep=";", encoding="utf-8-sig")
-    print(f"\nRanking salvo em: {arquivo_ranking}")
 
     interface = CarregamentoDados()
-    arquivo_rankings_natureza = pasta_resultados / "ranking_saw_pcj_2024_por_natureza_juridica.xlsx"
-    with pd.ExcelWriter(arquivo_rankings_natureza, engine="openpyxl") as writer:
+    arquivo_ranking = pasta_resultados / "ranking_saw_pcj_2024.xlsx"
+    with pd.ExcelWriter(arquivo_ranking, engine="openpyxl") as writer:
         rankingDetalhado.to_excel(writer, sheet_name="ranking_geral", index=False)
         nomes_abas = {"ranking_geral"}
         for natureza, rankingNatureza in rankingsPorNatureza.items():
             nome_aba = interface._nome_aba_excel(natureza, nomes_abas)
             rankingNatureza.to_excel(writer, sheet_name=nome_aba, index=False)
-    print(f"Rankings por natureza jurídica salvos em: {arquivo_rankings_natureza}")
+        criterios_identificados.to_excel(writer, sheet_name="indicadores", index=False)
+    print(f"\nRanking salvo em: {arquivo_ranking}")
 
     interface.mostrar_popup_resultados(
         rankingDetalhado=rankingDetalhado,
         criterios=criterios_identificados,
-        caminho_padrao=pasta_resultados / "ranking_saw_pcj_2024.xlsx",
+        caminho_padrao=arquivo_ranking,
         rankingsPorNatureza=rankingsPorNatureza,
     )
 
@@ -139,3 +137,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
