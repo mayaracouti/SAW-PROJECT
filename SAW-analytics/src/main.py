@@ -46,8 +46,9 @@ def main():
 
     # Validação de colunas obrigatórias
     coluna_natureza_juridica = "Natureza Jurídica"
+    coluna_tipologia = "Tipologia"
     required_cols = [c.criterioId for c in ListaDeCriterios]
-    colunas_obrigatorias = ["Município", coluna_natureza_juridica] + required_cols
+    colunas_obrigatorias = ["Município", coluna_tipologia, coluna_natureza_juridica] + required_cols
     missing_cols = [col for col in colunas_obrigatorias if col not in planilhaDeDados.columns]
     if missing_cols:
         raise ValueError(f"Colunas obrigatórias não encontradas na planilha: {missing_cols}")
@@ -58,7 +59,7 @@ def main():
             raise ValueError(f"Não foi possível identificar se o critério {criterio.criterioId} é bom ou ruim.")
         criterio.objetivo = objetivo
 
-    colunas_resultado = ["Município", coluna_natureza_juridica] + required_cols
+    colunas_resultado = ["Município", coluna_tipologia, coluna_natureza_juridica] + required_cols
     planilhaFiltrada = planilhaDeDados[colunas_resultado].copy()
     planilhaFiltrada = planilhaFiltrada.dropna(subset=["Município"])
 
@@ -88,8 +89,15 @@ def main():
         how="left"
     )
     rankingDetalhado = rankingDetalhado[
-        ["Posição", "Município", coluna_natureza_juridica, "Score"] + required_cols
+        ["Posição", "Município", coluna_tipologia, coluna_natureza_juridica, "Score"] + required_cols
     ]
+
+    rankingsPorTipologia = {}
+    for tipologia, rankingTipologia in rankingDetalhado.groupby(coluna_tipologia, dropna=False):
+        nome_tipologia = "Sem tipologia" if pd.isna(tipologia) else f"Tipologia {tipologia}"
+        rankingTipologia = rankingTipologia.sort_values(by="Score", ascending=False).reset_index(drop=True)
+        rankingTipologia["Posição"] = rankingTipologia.index + 1
+        rankingsPorTipologia[nome_tipologia] = rankingTipologia[rankingDetalhado.columns]
 
     rankingsPorNatureza = {}
     for natureza, rankingNatureza in rankingDetalhado.groupby(coluna_natureza_juridica, dropna=False):
@@ -123,6 +131,11 @@ def main():
         print(f"\nNatureza Jurídica: {natureza}")
         print(rankingNatureza[["Posição", "Município", "Score"]].to_string(index=False))
 
+    print("\nRankings por Tipologia:")
+    for tipologia, rankingTipologia in rankingsPorTipologia.items():
+        print(f"\n{tipologia}")
+        print(rankingTipologia[["Posição", "Município", "Score"]].to_string(index=False))
+
     pasta_resultados = Path(__file__).resolve().parent / "dados" / "resultado"
     pasta_resultados.mkdir(parents=True, exist_ok=True)
 
@@ -134,6 +147,9 @@ def main():
         for nome, rankingExtra in rankingsExtras.items():
             nome_aba = interface._nome_aba_excel(nome, nomes_abas)
             rankingExtra.to_excel(writer, sheet_name=nome_aba, index=False)
+        for tipologia, rankingTipologia in rankingsPorTipologia.items():
+            nome_aba = interface._nome_aba_excel(tipologia, nomes_abas)
+            rankingTipologia.to_excel(writer, sheet_name=nome_aba, index=False)
         for natureza, rankingNatureza in rankingsPorNatureza.items():
             nome_aba = interface._nome_aba_excel(natureza, nomes_abas)
             rankingNatureza.to_excel(writer, sheet_name=nome_aba, index=False)
@@ -145,6 +161,7 @@ def main():
         criterios=criterios_identificados,
         caminho_padrao=arquivo_ranking,
         rankingsPorNatureza=rankingsPorNatureza,
+        rankingsPorTipologia=rankingsPorTipologia,
         rankingsExtras=rankingsExtras,
     )
 
