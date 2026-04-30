@@ -5,6 +5,7 @@ import sys
 import pandas as pd
 import os
 from pathlib import Path
+from pathlib import Path
 from models.CarregamentoDados import CarregamentoDados
 
 # Isso força o Python a olhar dentro da pasta 'src'
@@ -22,12 +23,36 @@ def main():
     c5 = Criterio("IES0001", "Índice de atendimento total Col. Esgoto", 0.253724)
     c6 = Criterio("IES2002", "Esgoto coletado referido à água consumida", 0.115267)
    
+    c1 = Criterio("IAG0001", "Índice de atendimento total Abs. Água", 0.15441)
+    c2 = Criterio("IAG2008", "Índice de vol. água disponibilizada economia", 0.06732)
+    c3 = Criterio("IAG2013", "Perdas totais de água na distribuição", 0.091701)
+    c4 = Criterio("IAG3008", "Índice de reclamações água", 0.028359)
+    c5 = Criterio("IES0001", "Índice de atendimento total Col. Esgoto", 0.253724)
+    c6 = Criterio("IES2002", "Esgoto coletado referido à água consumida", 0.115267)
+   
     ListaDeCriterios = [c1, c2, c3, c4, c5, c6]
+    nome_arquivo = "preferencias_seg_hidrica_PCJ_2024(1).xlsx"
+    nome_aba = "dados2024_PCJ"
     nome_arquivo = "preferencias_seg_hidrica_PCJ_2024(1).xlsx"
     nome_aba = "dados2024_PCJ"
 
     # instancia obj chamado desrealizador
     desrealizador = desrealizadorDeDados()
+    abas_disponiveis = desrealizador.listarAbas(nome_arquivo)
+    if nome_aba not in abas_disponiveis:
+        raise ValueError(f"A aba {nome_aba} não foi encontrada. Abas disponíveis: {abas_disponiveis}")
+
+    planilhaDeDados = desrealizador.extracaoDadosBruto(nome_arquivo, nome_aba)
+
+    mapa_colunas = {}
+    objetivos_criterios = {}
+    for coluna in planilhaDeDados.columns:
+        if isinstance(coluna, str) and "-" in coluna:
+            criterio_id, objetivo = coluna.split("-", 1)
+            mapa_colunas[coluna] = criterio_id.strip()
+            objetivos_criterios[criterio_id.strip()] = objetivo.strip().lower()
+
+    planilhaDeDados = planilhaDeDados.rename(columns=mapa_colunas)
     abas_disponiveis = desrealizador.listarAbas(nome_arquivo)
     if nome_aba not in abas_disponiveis:
         raise ValueError(f"A aba {nome_aba} não foi encontrada. Abas disponíveis: {abas_disponiveis}")
@@ -71,6 +96,8 @@ def main():
     if dfCriterios['peso'].sum() == 0:
         raise ValueError("Os pesos dos critériosnão podem ser zero.")
 
+    dadosNumericosNormalizados = Normalizacao.normalizar_saw(dadosNumericos, dfCriterios)
+    dataFrameNormalizado = pd.concat([municipios, dadosNumericosNormalizados], axis=1)
     dadosNumericosNormalizados = Normalizacao.normalizar_saw(dadosNumericos, dfCriterios)
     dataFrameNormalizado = pd.concat([municipios, dadosNumericosNormalizados], axis=1)
     dadosPonderados = Normalizacao.aplicarPesos(dadosNumericosNormalizados, dfCriterios)
@@ -169,3 +196,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

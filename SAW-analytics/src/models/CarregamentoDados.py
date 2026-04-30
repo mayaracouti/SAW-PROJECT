@@ -2,6 +2,10 @@ from pathlib import Path
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 import pandas as pd
+from pathlib import Path
+import tkinter as tk
+from tkinter import filedialog, messagebox, ttk
+import pandas as pd
 
 class CarregamentoDados:
     def _nome_aba_excel(self, nome, usados):
