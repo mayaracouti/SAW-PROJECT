@@ -181,16 +181,22 @@ class CarregamentoDados:
             abas.add(aba_extra, text=nome[:24])
             self._criar_tabela(aba_extra, ranking.copy(), nome)
 
-        for tipologia, ranking in rankingsPorTipologia.items():
+        if rankingsPorTipologia:
             aba_tipologia = ttk.Frame(abas)
-            abas.add(aba_tipologia, text=str(tipologia)[:24])
-            self._criar_tabela(
-                aba_tipologia,
-                ranking.copy(),
-                f"Ranking - {tipologia}",
-            )
+            abas.add(aba_tipologia, text="Tipologia")
+            abas_tipologia = ttk.Notebook(aba_tipologia)
+            abas_tipologia.pack(fill="both", expand=True, padx=10, pady=10)
 
-        for natureza, ranking in rankingsPorNatureza.items():
+            for tipologia, ranking in rankingsPorTipologia.items():
+                subaba_tipologia = ttk.Frame(abas_tipologia)
+                abas_tipologia.add(subaba_tipologia, text=str(tipologia)[:24])
+                self._criar_tabela(
+                    subaba_tipologia,
+                    ranking.copy(),
+                    f"Ranking - {tipologia}",
+                )
+
+        if rankingsPorNatureza:
             aba_natureza = ttk.Frame(abas)
             abas.add(aba_natureza, text="Natureza Jurídica")
             abas_natureza = ttk.Notebook(aba_natureza)
