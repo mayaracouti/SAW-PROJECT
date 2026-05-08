@@ -4,6 +4,20 @@ from tkinter import filedialog, messagebox, ttk
 import pandas as pd
 
 class CarregamentoDados:
+    def _formatar_coluna_score_excel(self, writer):
+        for worksheet in writer.book.worksheets:
+            score_column = None
+            for cell in worksheet[1]:
+                if cell.value == "Score":
+                    score_column = cell.column
+                    break
+
+            if score_column is None:
+                continue
+
+            for row in range(2, worksheet.max_row + 1):
+                worksheet.cell(row=row, column=score_column).number_format = "0.00"
+
     def _nome_aba_excel(self, nome, usados):
         caracteres_invalidos = ["\\", "/", "*", "?", ":", "[", "]"]
         nome_limpo = str(nome)
@@ -113,6 +127,7 @@ class CarregamentoDados:
                     )
 
                 criterios.to_excel(writer, sheet_name="indicadores", index=False)
+                self._formatar_coluna_score_excel(writer)
 
         messagebox.showinfo("Exportação concluída", f"Arquivo salvo em:\n{destino}")
 
@@ -129,8 +144,10 @@ class CarregamentoDados:
 
         for _, linha in dataframe.iterrows():
             valores = []
-            for valor in linha.tolist():
-                if isinstance(valor, float):
+            for coluna, valor in linha.items():
+                if coluna == "Score" and isinstance(valor, float):
+                    valores.append(f"{valor:.2f}")
+                elif isinstance(valor, float):
                     valores.append(f"{valor:.6f}".rstrip("0").rstrip("."))
                 else:
                     valores.append(valor)

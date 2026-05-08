@@ -91,6 +91,7 @@ def main():
     rankingDetalhado = rankingDetalhado[
         ["Posição", "Município", coluna_tipologia, coluna_natureza_juridica, "Score"] + required_cols
     ]
+    rankingDetalhado["Score"] = rankingDetalhado["Score"].round(2)
 
     rankingsPorTipologia = {}
     for tipologia, rankingTipologia in rankingDetalhado.groupby(coluna_tipologia, dropna=False):
@@ -154,6 +155,7 @@ def main():
             nome_aba = interface._nome_aba_excel(natureza, nomes_abas)
             rankingNatureza.to_excel(writer, sheet_name=nome_aba, index=False)
         criterios_identificados.to_excel(writer, sheet_name="indicadores", index=False)
+        interface._formatar_coluna_score_excel(writer)
     print(f"\nRanking salvo em: {arquivo_ranking}")
 
     interface.mostrar_popup_resultados(
@@ -169,4 +171,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
