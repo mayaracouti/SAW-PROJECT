@@ -83,29 +83,48 @@ def main():
     criterios_identificados = dfCriterios[["criterioId", "descricao", "peso", "objetivo"]].copy()
     criterios_identificados.columns = ["Indicador", "Nome do indicador", "Peso", "Classificação"]
 
-    rankingDetalhado = rankinMunicipios.reset_index().merge(
+    rankingComTipologia = rankinMunicipios.reset_index().merge(
         planilhaFiltrada,
         on="Município",
         how="left"
     )
-    rankingDetalhado = rankingDetalhado[
+    rankingComTipologia = rankingComTipologia[
         ["Posição", "Município", coluna_tipologia, coluna_natureza_juridica, "Score"] + required_cols
     ]
-    rankingDetalhado["Score"] = rankingDetalhado["Score"].round(2)
+    rankingComTipologia["Score"] = rankingComTipologia["Score"].round(2)
+    colunas_ranking_geral = [
+        "Posição",
+        "Município",
+        coluna_tipologia,
+        "Score",
+    ] + required_cols
+    colunas_ranking_tipologia = [
+        "Posição",
+        "Município",
+        coluna_tipologia,
+        "Score",
+    ] + required_cols
+    colunas_ranking_natureza = [
+        "Posição",
+        "Município",
+        coluna_natureza_juridica,
+        "Score",
+    ] + required_cols
+    rankingDetalhado = rankingComTipologia[colunas_ranking_geral].copy()
 
     rankingsPorTipologia = {}
-    for tipologia, rankingTipologia in rankingDetalhado.groupby(coluna_tipologia, dropna=False):
+    for tipologia, rankingTipologia in rankingComTipologia.groupby(coluna_tipologia, dropna=False):
         nome_tipologia = "Sem tipologia" if pd.isna(tipologia) else f"Tipologia {tipologia}"
         rankingTipologia = rankingTipologia.sort_values(by="Score", ascending=False).reset_index(drop=True)
         rankingTipologia["Posição"] = rankingTipologia.index + 1
-        rankingsPorTipologia[nome_tipologia] = rankingTipologia[rankingDetalhado.columns]
+        rankingsPorTipologia[nome_tipologia] = rankingTipologia[colunas_ranking_tipologia]
 
     rankingsPorNatureza = {}
-    for natureza, rankingNatureza in rankingDetalhado.groupby(coluna_natureza_juridica, dropna=False):
+    for natureza, rankingNatureza in rankingComTipologia.groupby(coluna_natureza_juridica, dropna=False):
         nome_natureza = "Sem natureza jurídica" if pd.isna(natureza) else str(natureza)
         rankingNatureza = rankingNatureza.sort_values(by="Score", ascending=False).reset_index(drop=True)
         rankingNatureza["Posição"] = rankingNatureza.index + 1
-        rankingsPorNatureza[nome_natureza] = rankingNatureza[rankingDetalhado.columns]
+        rankingsPorNatureza[nome_natureza] = rankingNatureza[colunas_ranking_natureza]
 
     rankingsExtras = {
         "top_10": rankingDetalhado.head(10).copy(),
